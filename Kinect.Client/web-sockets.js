@@ -1,15 +1,11 @@
-﻿window.onload = function () {
-    var status = document.getElementById("status");
-    var canvas = document.getElementById("canvas");
-    var buttonColor = document.getElementById("color");
-    var buttonDepth = document.getElementById("depth");
-    var context = canvas.getContext("2d");
+﻿var SCALE_X = 1/20;
+var SCALE_Y = -1/100;
+var SCALE_Z = -5;
 
-    var camera = new Image();
+var OFFSET_X = -15;
+var OFFSET_Y = 5;
 
-    camera.onload = function () {
-        context.drawImage(camera, 0, 0);
-    }
+window.onload = function () {
 
     if (!window.WebSocket) {
         status.innerHTML = "Your browser does not support web sockets!";
@@ -43,13 +39,13 @@
             for (var i = 0; i < jsonObject.skeletons.length; i++) {
                 for (var j = 0; j < jsonObject.skeletons[i].joints.length; j++) {
                     var joint = jsonObject.skeletons[i].joints[j];
-
-                    // Draw!!!
-                    context.fillStyle = "#FF0000";
-                    context.beginPath();
-                    context.arc(joint.x, joint.y, 10, 0, Math.PI * 2, true);
-                    context.closePath();
-                    context.fill();
+                    if (joint.name == "handright") {
+                        var el = document.querySelector("#right");
+                        el.setAttribute('position', joint.x * SCALE_X + OFFSET_X + " " + (joint.y * SCALE_Y + OFFSET_Y) + " " + joint.z * SCALE_Z);
+                    } else if (joint.name == "handleft") {
+                        var el = document.querySelector("#left");
+                        el.setAttribute('position', joint.x * SCALE_X + OFFSET_X + " " + (joint.y * SCALE_Y + OFFSET_Y) + " " + joint.z * SCALE_Z);
+                    }
                 }
             }
         }
@@ -70,12 +66,4 @@
             window.URL.revokeObjectURL(source);
         }
     };
-
-    buttonColor.onclick = function () {
-        socket.send("Color");
-    }
-
-    buttonDepth.onclick = function () {
-        socket.send("Depth");
-    }
 };
