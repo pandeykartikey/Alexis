@@ -1,12 +1,13 @@
-﻿var SCALE_X = 1/20;
-var SCALE_Y = -1/100;
-var SCALE_Z = -5;
+﻿var SCALE_X = 1/10;
+var SCALE_Y = -1/20;
+var SCALE_Z = 5;
 
-var OFFSET_X = -15;
-var OFFSET_Y = 5;
+var OFFSET_X = -30;
+var OFFSET_Y = 15;
+var OFFSET_Z = -15;
 
 window.onload = function () {
-
+    var scene = document.querySelector("#scene");
     if (!window.WebSocket) {
         status.innerHTML = "Your browser does not support web sockets!";
         return;
@@ -39,31 +40,40 @@ window.onload = function () {
             for (var i = 0; i < jsonObject.skeletons.length; i++) {
                 for (var j = 0; j < jsonObject.skeletons[i].joints.length; j++) {
                     var joint = jsonObject.skeletons[i].joints[j];
-                    if (joint.name == "handright") {
+
+                    if (joint.name == "handright") 
                         var el = document.querySelector("#right");
-                        el.setAttribute('position', joint.x * SCALE_X + OFFSET_X + " " + (joint.y * SCALE_Y + OFFSET_Y) + " " + joint.z * SCALE_Z);
-                    } else if (joint.name == "handleft") {
+                    else if (joint.name == "handleft")
                         var el = document.querySelector("#left");
-                        el.setAttribute('position', joint.x * SCALE_X + OFFSET_X + " " + (joint.y * SCALE_Y + OFFSET_Y) + " " + joint.z * SCALE_Z);
+
+                    if (joint.name == "handright" || joint.name == "handleft") {
+                        var initial = {
+                            x: el.getAttribute('position').x,
+                            y: el.getAttribute('position').y,
+                            z: el.getAttribute('position').z
+                        },
+                            final = {
+                                x: (joint.x * SCALE_X + OFFSET_X),
+                                y: (joint.y * SCALE_Y + OFFSET_Y),
+                                z: (joint.z * SCALE_Z + OFFSET_Z)
+                        }
+
+                        var mesh_coords = initial.x + ' ' + initial.y + ' ' + initial.z + ', ' + final.x + ' ' + final.y + ' ' + final.z;
+
+                        var mesh = document.createElement('a-entity');
+                        var mesh_properties = {
+                            lineWidth: '10',
+                            path: mesh_coords,
+                            color: '#E20049'
+                        };
+
+                        mesh.setAttribute('meshline', mesh_properties);
+                        scene.appendChild(mesh);
+
+                        el.setAttribute('position', final.x + " " + final.y + " " + final.z);
                     }
                 }
             }
-        }
-        else if (event.data instanceof Blob) {
-            // RGB FRAME DATA
-            // 1. Get the raw data.
-            var blob = event.data;
-
-            // 2. Create a new URL for the blob object.
-            window.URL = window.URL || window.webkitURL;
-
-            var source = window.URL.createObjectURL(blob);
-
-            // 3. Update the image source.
-            camera.src = source;
-
-            // 4. Release the allocated memory.
-            window.URL.revokeObjectURL(source);
         }
     };
 };
