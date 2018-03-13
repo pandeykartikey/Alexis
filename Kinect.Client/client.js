@@ -1,55 +1,54 @@
-const http = require('http');
-const io = require('socket.io');
-var W3CWebSocket = require('websocket').w3cwebsocket;
+var app = require('express')();
+var http = require('http').Server(app);
+var io = require('socket.io')(http);
+var WebSocket = require('ws');
 
-const hostname = '127.0.0.1';
-const port = 3000;
+var SERVER = ["ws://localhost:8181"];
+var PORT = 3000;
 
-const server = http.createServer((req, res) => {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/plain');
-    res.end('Hello World\n');
+http.listen(PORT, function () {
+    console.log('listening on *:3000');
 });
 
-server.listen(port, hostname);
-const SERVER = ["ws://localhost:8181"];
-
 var user = [];
-
-//for (var i = 0; i <= SERVER.length; i++) {
-//    client[i] = new WebSocket(CLIENT[i]);
-//}
+var soc = [];
     
-
-for (var i = 0; i <= SERVER.length; i++) {
+for (var i = 0; i < SERVER.length; i++) {
     if (!user[i])
-        user[i] = {};
-
+        user[i] = null;
+    if (!soc[i])
+        soc[i] = null;
     console.log("Connecting to server...");
 
-    // Initialize a new web socket.
+    // Initialize a new web socket for a kinect server.
 
-    var socket = new W3CWebSocket(SERVER[i], 'echo-protocol');
+    soc[i] = new WebSocket(SERVER[i]);
 
-    
     // Connection established.
-    socket.onopen = function () {
+    soc[i].onopen = function () {
         console.log("Connection successful.");
     };
 
     // Connection closed.
-    socket.onclose = function () {
+    soc[i].onclose = function () {
         console.log("Connection closed.");
-    }
+    };
+};
 
-    // Receive data FROM the server!
-    socket.onmessage = function (event) {
-        if (typeof event.data === "string") {
-            // SKELETON DATA
+io.on('connection', function (socket) {
 
-            // Get the data in JSON format.
-            user[i] = JSON.parse(event.data);
-            io.emit(user[i]);
+    console.log("A user is connected");
+
+    for (var i = 0; i < SERVER.length; i++) {
+
+        soc[i].onmessage = function (event) {
+            if (typeof event.data === "string") {
+                // SKELETON DATA from a single kinect
+                // Get the data in JSON format.
+                user[i] = JSON.parse(event.data);
+
+                io.emit("update", user);
+            }
         }
     }
-}
+});
