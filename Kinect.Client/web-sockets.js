@@ -8,33 +8,19 @@ var OFFSET_Z = -15;
 
 window.onload = function () {
     var scene = document.querySelector("#scene");
-    if (!window.WebSocket) {
-        status.innerHTML = "Your browser does not support web sockets!";
-        return;
-    }
 
     status.innerHTML = "Connecting to server...";
 
     // Initialize a new web socket.
-    var socket = new WebSocket("ws://localhost:8181");
-
-    // Connection established.
-    socket.onopen = function () {
-        status.innerHTML = "Connection successful.";
-    };
-
-    // Connection closed.
-    socket.onclose = function () {
-        status.innerHTML = "Connection closed.";
-    }
+    var socket = io('http://localhost');
 
     // Receive data FROM the server!
-    socket.onmessage = function (event) {
-        if (typeof event.data === "string") {
+    socket.on('update', (data) {
+        if (typeof data === "string") {
             // SKELETON DATA
 
             // Get the data in JSON format.
-            var jsonObject = JSON.parse(event.data);
+            var jsonObject = JSON.parse(data);
 
             // Display the skeleton joints.
             for (var i = 0; i < jsonObject.skeletons.length; i++) {
