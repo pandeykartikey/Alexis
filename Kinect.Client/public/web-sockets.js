@@ -12,7 +12,10 @@ var ALLOWED_TO_DRAW_RIGHT = false;
 var MESH_LINE_WIDTH = '10';
 var MESH_DEFAULT_COLOR = '#E20049';
 
-function draw(initial, final, scene, el) {
+function fist(){
+}
+
+function draw(initial, final, scene, el){
 
     var mesh_coords = initial.x + ' ' + initial.y + ' ' + initial.z + ', ' + final.x + ' ' + final.y + ' ' + final.z;
 
@@ -49,8 +52,7 @@ function erase(initial, final, scene, el) {
             line.remove();
         }
 
-        el.setAttribute('position', final.x + " " + final.y + " " + final.z);
-    }
+    } 
 }
 
 window.onload = function () {
@@ -117,6 +119,7 @@ window.onload = function () {
 
                         if (initial.x && initial.y && initial.z && ALLOWED_TO_DRAW_RIGHT && ALLOWED_TO_DRAW_RIGHT)
                             actionFunction(initial, final, scene, el);
+
                     }
                 }
             }
