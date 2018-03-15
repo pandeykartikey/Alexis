@@ -4,9 +4,28 @@ using System.Linq;
 using System.Text;
 using Fleck;
 using Microsoft.Kinect;
+using Microsoft.Kinect.Toolkit.Interaction;
+using Microsoft.Kinect.Toolkit.Controls;
+using Microsoft.Kinect.Toolkit;
+
 
 namespace Kinect.Server
 {
+    public class NewInteractionClient : IInteractionClient
+    {
+        public InteractionInfo GetInteractionInfoAtLocation(int skeletonTrackingId, InteractionHandType handType, double x, double y)
+        {
+            var result = new InteractionInfo();
+                  result.IsGripTarget = true;
+                    result.IsPressTarget = true;
+                    result.PressAttractionPointX = 0.5;
+                result.PressAttractionPointY = 0.5;
+                result.PressTargetControlId = 1;
+
+         return result;
+        }
+    }
+
     class Program
     {
         static List<IWebSocketConnection> _clients = new List<IWebSocketConnection>();
@@ -17,6 +36,11 @@ namespace Kinect.Server
 
         static CoordinateMapper _coordinateMapper;
 
+        static UserInfo[] userInfos = new UserInfo[6];
+
+        static InteractionStream its;
+        static KinectSensor sensor;
+
         static void Main(string[] args)
         {
             InitializeConnection();
@@ -25,7 +49,7 @@ namespace Kinect.Server
             Console.ReadLine();
         }
 
-        private static void InitializeConnection()
+        static void InitializeConnection()
         {
             var server = new WebSocketServer("ws://localhost:8181");
 
@@ -40,39 +64,25 @@ namespace Kinect.Server
                 {
                     _clients.Remove(socket);
                 };
-
-                socket.OnMessage = message =>
-                {
-                    switch (message)
-                    {
-                        case "Color":
-                            _mode = Mode.Color;
-                            break;
-                        case "Depth":
-                            _mode = Mode.Depth;
-                            break;
-                        default:
-                            break;
-                    }
-
-                    Console.WriteLine("Switched to " + message);
-                };
             });
         }
 
-        private static void InitilizeKinect()
+        static void InitilizeKinect()
         {
-            var sensor = KinectSensor.KinectSensors.SingleOrDefault();
+            sensor = KinectSensor.KinectSensors.SingleOrDefault();
+
 
             if (sensor != null)
             {
-                sensor.ColorStream.Enable();
-                sensor.DepthStream.Enable();
+                sensor.ColorStream.Enable(ColorImageFormat.RgbResolution640x480Fps30);
                 sensor.SkeletonStream.Enable();
+                sensor.DepthStream.Enable(DepthImageFormat.Resolution320x240Fps30);
 
                 sensor.AllFramesReady += Sensor_AllFramesReady;
-
                 _coordinateMapper = sensor.CoordinateMapper;
+
+                its = new InteractionStream(sensor, new NewInteractionClient());
+                its.InteractionFrameReady += OnInteractionFrameReady;
 
                 sensor.Start();
             }
@@ -80,53 +90,84 @@ namespace Kinect.Server
 
         static void Sensor_AllFramesReady(object sender, AllFramesReadyEventArgs e)
         {
-            using (var frame = e.OpenColorImageFrame())
-            {
-                if (frame != null)
-                {
-                    if (_mode == Mode.Color)
-                    {
-                        var blob = frame.Serialize();
-
-                        foreach (var socket in _clients)
-                        {
-                            socket.Send(blob);
-                        }
-                    }
-                }
-            }
-
-            using (var frame = e.OpenDepthImageFrame())
-            {
-                if (frame != null)
-                {
-                    if (_mode == Mode.Depth)
-                    {
-                        var blob = frame.Serialize();
-
-                        foreach (var socket in _clients)
-                        {
-                            socket.Send(blob);
-                        }
-                    }
-                }
-            }
 
             using (var frame = e.OpenSkeletonFrame())
             {
                 if (frame != null)
                 {
-                    frame.CopySkeletonDataTo(_skeletons);
 
+                    frame.CopySkeletonDataTo(_skeletons);
+                    try
+                    {
+                        var accelerometerReading = sensor.AccelerometerGetCurrentReading();
+                        //Console.WriteLine("processed skeleton");
+                        its.ProcessSkeleton(_skeletons, accelerometerReading, frame.Timestamp);
+                    }
+                    catch (NullReferenceException err)
+                    {
+                    }
                     var users = _skeletons.Where(s => s.TrackingState == SkeletonTrackingState.Tracked).ToList();
 
                     if (users.Count > 0)
                     {
+
                         string json = users.Serialize(_coordinateMapper, _mode);
 
                         foreach (var socket in _clients)
                         {
                             socket.Send(json);
+                        }
+                    }
+                }
+            }
+        }
+
+        static void OnInteractionFrameReady(object sender, InteractionFrameReadyEventArgs e)
+        {
+            Console.WriteLine("User frame");
+            using (InteractionFrame frame = e.OpenInteractionFrame())
+            {
+                Console.WriteLine("User frame");
+                if (frame != null)
+                {
+                    frame.CopyInteractionDataTo(userInfos);
+
+                    foreach (UserInfo userInfo in userInfos)
+                    {
+                        Console.WriteLine("User ", userInfo);
+                        foreach (InteractionHandPointer handPointer in userInfo.HandPointers)
+                        {
+
+                            string action = null;
+
+                            switch (handPointer.HandEventType)
+                            {
+                                case InteractionHandEventType.Grip:
+                                    action = "gripped";
+                                    break;
+
+                                case InteractionHandEventType.GripRelease:
+                                    action = "released";
+                                    break;
+                            }
+
+                            if (action != null)
+                            {
+                                string handSide = "unknown";
+
+                                switch (handPointer.HandType)
+                                {
+                                    case InteractionHandType.Left:
+                                        handSide = "left";
+                                        break;
+
+                                    case InteractionHandType.Right:
+                                        handSide = "right";
+                                        break;
+                                }
+
+                                Console.WriteLine("User " + userInfo.SkeletonTrackingId + " " + action + " their " + handSide + "hand.");
+                            }
                         }
                     }
                 }

@@ -1,13 +1,27 @@
-var app = require('express')();
+var express = require('express');
+var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var WebSocket = require('ws');
 
 var SERVER = ["ws://localhost:8181"];
 var PORT = 3000;
+var HOSTNAME = "0.0.0.0";
 
-http.listen(PORT, function () {
-    console.log('listening on *:3000');
+app.use(function (req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+});
+
+app.use(express.static('public'));
+
+app.get('/', function (req, res, next) {
+    res.sendfile(__dirname + '/public/index.html');
+})
+
+http.listen(PORT, HOSTNAME ,function () {
+    console.log(HOSTNAME, PORT);
 });
 
 var user = [];
@@ -46,7 +60,7 @@ io.on('connection', function (socket) {
                 // SKELETON DATA from a single kinect
                 // Get the data in JSON format.
                 user[i] = JSON.parse(event.data);
-
+                console.log(user);
                 io.emit("update", user);
             }
         }

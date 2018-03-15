@@ -1,5 +1,5 @@
-﻿var SCALE_X = 1/10;
-var SCALE_Y = -1/20;
+﻿var SCALE_X = 1 / 10;
+var SCALE_Y = -1 / 20;
 var SCALE_Z = 5;
 
 var OFFSET_X = -30;
@@ -9,7 +9,7 @@ var OFFSET_Z = -15;
 var MESH_LINE_WIDTH = '10';
 var MESH_DEFAULT_COLOR = '#E20049';
 
-function draw(initial, final, scene, el){
+function draw(initial, final, scene, el) {
 
     var mesh_coords = initial.x + ' ' + initial.y + ' ' + initial.z + ', ' + final.x + ' ' + final.y + ' ' + final.z;
 
@@ -27,7 +27,7 @@ function draw(initial, final, scene, el){
     el.setAttribute('position', final.x + " " + final.y + " " + final.z);
 }
 
-function erase(initial, final, scene, el){
+function erase(initial, final, scene, el) {
     document.getElementsByClassName('mesh');
     for (line in mesh) {
         var line_coords = {
@@ -36,15 +36,15 @@ function erase(initial, final, scene, el){
             z: line_coords.getAttribute('position').z
         },
 
-        x1 = final.x,
-        x2 = line_coords.x,
-        y1 = final.y,
-        y2 = line_coords.y,
-        z1 = final.z,
-        z2 = line_coords.z,
-        dist = (Math.sqrt(Math.pow((x1-x2),2) + Math.pow((y1-y2),2) + Math.pow((z1-z2),2)));
-        
-        if(dist < radius){
+            x1 = final.x,
+            x2 = line_coords.x,
+            y1 = final.y,
+            y2 = line_coords.y,
+            z1 = final.z,
+            z2 = line_coords.z,
+            dist = (Math.sqrt(Math.pow((x1 - x2), 2) + Math.pow((y1 - y2), 2) + Math.pow((z1 - z2), 2)));
+
+        if (dist < radius) {
             line.remove();
         }
 
@@ -87,13 +87,15 @@ window.onload = function () {
                             y: el.getAttribute('position').y,
                             z: el.getAttribute('position').z
                         },
-                        final = {
-                            x: (joint.x * SCALE_X + OFFSET_X),
-                            y: (joint.y * SCALE_Y + OFFSET_Y),
-                            z: (joint.z * SCALE_Z + OFFSET_Z)
-                        }
-
-                        actionFunction(initial, final, scene ,el);
+                            final = {
+                                x: (joint.x * SCALE_X + OFFSET_X),
+                                y: (joint.y * SCALE_Y + OFFSET_Y),
+                                z: (joint.z * SCALE_Z + OFFSET_Z)
+                            }
+                        if(!initial.x || !initial.y || !initial.z)
+                            el.setAttribute('position', final.x + " " + final.y + " " + final.z);
+                        else
+                            actionFunction(initial, final, scene, el);
                     }
                 }
             }
