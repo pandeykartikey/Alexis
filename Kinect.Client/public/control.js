@@ -20,8 +20,7 @@ function changeColor(color, hand){
 }	
 
 
-function checkCollision(color, hand, call_func){
-
+function checkCollision(color, hand, call_func) {
 	var pos1 = color.getAttribute('position'),
 	pos2 = hand.getAttribute('position');
 	var x1 = pos1.x,
@@ -30,11 +29,9 @@ function checkCollision(color, hand, call_func){
 	y2 = pos2.y,
 	z1 = pos1.z,
 	z2 = pos2.z;
-    console.log((Math.sqrt(Math.pow((x1 - x2), 2) + Math.pow((y1 - y2), 2))));
-	if((Math.sqrt(Math.pow((x1-x2),2) + Math.pow((y1-y2),2))) < RADIUS){
-		var setColor = color.getAttribute('color');
-	// console.log(JSON.stringify(pos1)+JSON.stringify(pos2));
-		call_func(setColor, hand);
+
+    if ((Math.sqrt(Math.pow((x1 - x2), 2) + Math.pow((y1 - y2), 2))) < RADIUS) {
+        call_func(color.getAttribute('color'), hand);
 	}
 
 	setTimeout(checkCollision.bind(this, color, hand, call_func), 200);

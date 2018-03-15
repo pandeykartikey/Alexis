@@ -1,10 +1,13 @@
 ﻿var SCALE_X = 1 / 10;
 var SCALE_Y = -1 / 20;
-var SCALE_Z = 5;
+var SCALE_Z = 20;
 
 var OFFSET_X = -30;
 var OFFSET_Y = 15;
-var OFFSET_Z = -15;
+var OFFSET_Z = -30;
+
+var ALLOWED_TO_DRAW_LEFT = false;
+var ALLOWED_TO_DRAW_RIGHT = false;
 
 var MESH_LINE_WIDTH = '10';
 var MESH_DEFAULT_COLOR = '#E20049';
@@ -23,8 +26,6 @@ function draw(initial, final, scene, el) {
     mesh.setAttribute('meshline', mesh_properties);
     mesh.setAttribute('class', 'mesh');
     scene.appendChild(mesh);
-
-    el.setAttribute('position', final.x + " " + final.y + " " + final.z);
 }
 
 function erase(initial, final, scene, el) {
@@ -55,6 +56,11 @@ function erase(initial, final, scene, el) {
 window.onload = function () {
     var scene = document.querySelector("#scene");
     var actionFunction = draw;
+    var jointsArray = {
+        "handright": [],
+        "handleft": []
+    };
+    var smoothness = 5;
 
     status.innerHTML = "Connecting to server...";
 
@@ -91,14 +97,41 @@ window.onload = function () {
                                 x: (joint.x * SCALE_X + OFFSET_X),
                                 y: (joint.y * SCALE_Y + OFFSET_Y),
                                 z: (joint.z * SCALE_Z + OFFSET_Z)
+                            };
+
+                        if (initial.x && initial.y && initial.z) {
+                            if (jointsArray[joint.name].length === smoothness) {
+                                var temp = jointsArray[joint.name].shift();
+                                jointsArray[joint.name].push(final);
+
+                                final.x = ((initial.x * smoothness) - temp.x + final.x) / smoothness;
+                                final.y = ((initial.y * smoothness) - temp.y + final.y) / smoothness;
+                                final.z = ((initial.z * smoothness) - temp.z + final.z) / smoothness;
                             }
-                        if(!initial.x || !initial.y || !initial.z)
-                            el.setAttribute('position', final.x + " " + final.y + " " + final.z);
-                        else
+                            else {
+                                jointsArray[joint.name].push(final);
+                            }
+                        }
+
+                        el.setAttribute('position', final.x + " " + final.y + " " + final.z);
+
+                        if (initial.x && initial.y && initial.z && ALLOWED_TO_DRAW_RIGHT && ALLOWED_TO_DRAW_RIGHT)
                             actionFunction(initial, final, scene, el);
                     }
                 }
             }
+        }
+    })
+
+    socket.on("action", function (data) {
+        console.log(data);
+        if (data.action === "gripped") {
+            ALLOWED_TO_DRAW_LEFT = true;
+            ALLOWED_TO_DRAW_RIGHT = true;
+        }
+        if (data.action === "released") {
+            ALLOWED_TO_DRAW_LEFT = false;
+            ALLOWED_TO_DRAW_RIGHT = false;
         }
     })
 }

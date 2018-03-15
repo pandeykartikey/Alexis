@@ -16,13 +16,15 @@ namespace Kinect.Server
         public InteractionInfo GetInteractionInfoAtLocation(int skeletonTrackingId, InteractionHandType handType, double x, double y)
         {
             var result = new InteractionInfo();
-                  result.IsGripTarget = true;
-                    result.IsPressTarget = true;
-                    result.PressAttractionPointX = 0.5;
-                result.PressAttractionPointY = 0.5;
-                result.PressTargetControlId = 1;
+            result.IsGripTarget = true;
+            result.IsPressTarget = true;
+            result.PressAttractionPointX = 0.5;
+            result.PressAttractionPointY = 0.5;
+            result.PressTargetControlId = 1;
 
-         return result;
+
+
+            return result;
         }
     }
 
@@ -38,8 +40,8 @@ namespace Kinect.Server
 
         static UserInfo[] userInfos = new UserInfo[6];
 
-        static InteractionStream its;
-        static KinectSensor sensor;
+        static InteractionStream _interactionStream;
+        static KinectSensor _sensor;
 
         static void Main(string[] args)
         {
@@ -69,54 +71,68 @@ namespace Kinect.Server
 
         static void InitilizeKinect()
         {
-            sensor = KinectSensor.KinectSensors.SingleOrDefault();
+            _sensor = KinectSensor.KinectSensors.SingleOrDefault();
 
 
-            if (sensor != null)
+            if (_sensor != null)
             {
-                sensor.ColorStream.Enable(ColorImageFormat.RgbResolution640x480Fps30);
-                sensor.SkeletonStream.Enable();
-                sensor.DepthStream.Enable(DepthImageFormat.Resolution320x240Fps30);
+                _sensor.DepthStream.Enable(DepthImageFormat.Resolution640x480Fps30);
 
-                sensor.AllFramesReady += Sensor_AllFramesReady;
-                _coordinateMapper = sensor.CoordinateMapper;
+                _sensor.SkeletonStream.EnableTrackingInNearRange = true;
+                _sensor.SkeletonStream.Enable();
+                _coordinateMapper = _sensor.CoordinateMapper;
+                _interactionStream = new InteractionStream(_sensor, new NewInteractionClient());
+                _interactionStream.InteractionFrameReady += OnInteractionFrameReady;
 
-                its = new InteractionStream(sensor, new NewInteractionClient());
-                its.InteractionFrameReady += OnInteractionFrameReady;
+                _sensor.DepthFrameReady += SensorOnDepthFrameReady;
+                _sensor.SkeletonFrameReady += SensorOnSkeletonFrameReady;
 
-                sensor.Start();
+                _sensor.Start();
             }
         }
-
-        static void Sensor_AllFramesReady(object sender, AllFramesReadyEventArgs e)
+        static void SensorOnDepthFrameReady(object sender, DepthImageFrameReadyEventArgs depthImageFrameReadyEventArgs)
         {
-
-            using (var frame = e.OpenSkeletonFrame())
+            using (DepthImageFrame depthFrame = depthImageFrameReadyEventArgs.OpenDepthImageFrame())
             {
-                if (frame != null)
+                if (depthFrame == null)
+                    return;
+
+                try
+                {
+                    _interactionStream.ProcessDepth(depthFrame.GetRawPixelData(), depthFrame.Timestamp);
+                }
+                catch (InvalidOperationException)
+                {
+                }
+            }
+        }
+        static void SensorOnSkeletonFrameReady(object sender, SkeletonFrameReadyEventArgs skeletonFrameReadyEventArgs)
+        {
+            using (SkeletonFrame skeletonFrame = skeletonFrameReadyEventArgs.OpenSkeletonFrame())
+            {
+                if (skeletonFrame == null)
+                    return;
+
+                try
+                {
+                    skeletonFrame.CopySkeletonDataTo(_skeletons);
+                    var accelerometerReading = _sensor.AccelerometerGetCurrentReading();
+                    _interactionStream.ProcessSkeleton(_skeletons, accelerometerReading, skeletonFrame.Timestamp);
+                }
+                catch (InvalidOperationException)
+                {
+                }
+
+                var users = _skeletons.Where(s => s.TrackingState == SkeletonTrackingState.Tracked).ToList();
+
+                if (users.Count > 0)
                 {
 
-                    frame.CopySkeletonDataTo(_skeletons);
-                    try
-                    {
-                        var accelerometerReading = sensor.AccelerometerGetCurrentReading();
-                        //Console.WriteLine("processed skeleton");
-                        its.ProcessSkeleton(_skeletons, accelerometerReading, frame.Timestamp);
-                    }
-                    catch (NullReferenceException err)
-                    {
-                    }
-                    var users = _skeletons.Where(s => s.TrackingState == SkeletonTrackingState.Tracked).ToList();
+                    string json = users.Serialize(_coordinateMapper, _mode);
 
-                    if (users.Count > 0)
+                    foreach (var socket in _clients)
                     {
-
-                        string json = users.Serialize(_coordinateMapper, _mode);
-
-                        foreach (var socket in _clients)
-                        {
-                            socket.Send(json);
-                        }
+                        socket.Send(json);
                     }
                 }
             }
@@ -124,17 +140,14 @@ namespace Kinect.Server
 
         static void OnInteractionFrameReady(object sender, InteractionFrameReadyEventArgs e)
         {
-            Console.WriteLine("User frame");
             using (InteractionFrame frame = e.OpenInteractionFrame())
             {
-                Console.WriteLine("User frame");
                 if (frame != null)
                 {
                     frame.CopyInteractionDataTo(userInfos);
 
                     foreach (UserInfo userInfo in userInfos)
                     {
-                        Console.WriteLine("User ", userInfo);
                         foreach (InteractionHandPointer handPointer in userInfo.HandPointers)
                         {
 
@@ -166,7 +179,11 @@ namespace Kinect.Server
                                         break;
                                 }
 
-                                Console.WriteLine("User " + userInfo.SkeletonTrackingId + " " + action + " their " + handSide + "hand.");
+                                Console.WriteLine("{\"hand\":" + handSide + ",\"action\":" + action + "}");
+                                foreach (var socket in _clients)
+                                {
+                                    socket.Send("{\"hand\":\"" + handSide + "\",\"action\":\"" + action + "\"}");
+                                }
                             }
                         }
                     }
