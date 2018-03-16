@@ -8,6 +8,7 @@ var OFFSET_Z = -30;
 
 var ALLOWED_TO_DRAW_LEFT = false;
 var ALLOWED_TO_DRAW_RIGHT = false;
+var ALLOWED_TO_PICK_COLOR = false;
 
 var MESH_LINE_WIDTH = '10';
 var MESH_DEFAULT_COLOR = '#E20049';
@@ -115,7 +116,7 @@ window.onload = function () {
 
                         el.setAttribute('position', final.x + " " + final.y + " " + final.z);
 
-                        if (initial.x && initial.y && initial.z && ALLOWED_TO_DRAW_RIGHT && ALLOWED_TO_DRAW_RIGHT)
+                        if (initial.x && initial.y && initial.z && ALLOWED_TO_DRAW_LEFT && ALLOWED_TO_DRAW_RIGHT && !ALLOWED_TO_PICK_COLOR)
                             actionFunction(initial, final, scene, el);
                     }
                 }
@@ -128,10 +129,12 @@ window.onload = function () {
         if (data.action === "gripped") {
             ALLOWED_TO_DRAW_LEFT = true;
             ALLOWED_TO_DRAW_RIGHT = true;
+            ALLOWED_TO_PICK_COLOR = false;
         }
         if (data.action === "released") {
             ALLOWED_TO_DRAW_LEFT = false;
             ALLOWED_TO_DRAW_RIGHT = false;
+            ALLOWED_TO_PICK_COLOR = true;
         }
     })
 }
