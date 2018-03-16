@@ -1,6 +1,6 @@
 ﻿var SCALE_X = 1 / 10;
-var SCALE_Y = -1 / 20;
-var SCALE_Z = 20;
+var SCALE_Y = -1 / 15;
+var SCALE_Z = 10;
 
 var OFFSET_X = -30;
 var OFFSET_Y = 15;
@@ -8,12 +8,15 @@ var OFFSET_Z = -30;
 
 var ALLOWED_TO_DRAW_LEFT = false;
 var ALLOWED_TO_DRAW_RIGHT = false;
-var ALLOWED_TO_PICK_COLOR = false;
 
 var MESH_LINE_WIDTH = '10';
-var MESH_DEFAULT_COLOR = '#E20049';
+var COLOR_LEFT = '#E20049';
+var COLOR_RIGHT = '#E20049';
 
-function draw(initial, final, scene, el) {
+var SOCKET_URL = "https://db098efa.ngrok.io/";
+var actionFunction = draw;
+
+function draw(initial, final, scene, el, hand) {
 
     var mesh_coords = initial.x + ' ' + initial.y + ' ' + initial.z + ', ' + final.x + ' ' + final.y + ' ' + final.z;
 
@@ -21,32 +24,45 @@ function draw(initial, final, scene, el) {
     var mesh_properties = {
         lineWidth: MESH_LINE_WIDTH,
         path: mesh_coords,
-        color: MESH_DEFAULT_COLOR
+        color: (hand === "handright") ? COLOR_RIGHT: COLOR_LEFT
     };
-
     mesh.setAttribute('meshline', mesh_properties);
     mesh.setAttribute('class', 'mesh');
     scene.appendChild(mesh);
 }
 
 function erase(initial, final, scene, el) {
-    document.getElementsByClassName('mesh');
-    for (line in mesh) {
-        var line_coords = {
-            x: line_coords.getAttribute('position').x,
-            y: line_coords.getAttribute('position').y,
-            z: line_coords.getAttribute('position').z
+    var mesh = document.getElementsByClassName('mesh');
+    for (var counter = 0; counter < mesh.length; counter++) {
+        var line = mesh[counter];
+
+        var meshline = line.getAttribute('meshline');
+
+        var path = meshline.path;
+        var line_coords_1 = {
+            x: path[0].x,
+            y: path[0].y,
+            z: path[0].z
         },
+            line_coords_2 = {
+                x: path[1].x,
+                y: path[1].y,
+                z: path[1].z
+            },
 
             x1 = final.x,
-            x2 = line_coords.x,
+            x2 = line_coords_1.x,
+            x3 = line_coords_2.x,
             y1 = final.y,
-            y2 = line_coords.y,
+            y2 = line_coords_1.y,
+            y3 = line_coords_2.y,
             z1 = final.z,
-            z2 = line_coords.z,
-            dist = (Math.sqrt(Math.pow((x1 - x2), 2) + Math.pow((y1 - y2), 2) + Math.pow((z1 - z2), 2)));
+            z2 = line_coords_1.z,
+            z3 = line_coords_2.z,
+            dist_1 = (Math.sqrt(Math.pow((x1 - x2), 2) + Math.pow((y1 - y2), 2) + Math.pow((z1 - z2), 2))),
+            dist_2 = (Math.sqrt(Math.pow((x1 - x3), 2) + Math.pow((y1 - y3), 2) + Math.pow((z1 - z3), 2)));
 
-        if (dist < radius) {
+        if (dist_1 < RADIUS|| dist_2 < RADIUS) {
             line.remove();
         }
 
@@ -56,17 +72,17 @@ function erase(initial, final, scene, el) {
 
 window.onload = function () {
     var scene = document.querySelector("#scene");
-    var actionFunction = draw;
+    
     var jointsArray = {
         "handright": [],
         "handleft": []
     };
-    var smoothness = 5;
+    var smoothness = 1;
 
     status.innerHTML = "Connecting to server...";
 
     // Initialize a new socket.
-    var socket = io('http://localhost:3000/');
+    var socket = io(SOCKET_URL);
 
     // Receive data FROM the node server!
     socket.on("update", function (data) {
@@ -90,11 +106,16 @@ window.onload = function () {
 
                     if (joint.name == "handright" || joint.name == "handleft") {
                         var initial = {
-                            x: el.getAttribute('position').x,
-                            y: el.getAttribute('position').y,
-                            z: el.getAttribute('position').z
-                        },
-                            final = {
+                            x:'',y:'',z:''
+                        };
+                        if (el.getAttribute('position')) {
+                            initial = {
+                                x: el.getAttribute('position').x,
+                                y: el.getAttribute('position').y,
+                                z: el.getAttribute('position').z
+                            }
+                        }
+                        var final = {
                                 x: (joint.x * SCALE_X + OFFSET_X),
                                 y: (joint.y * SCALE_Y + OFFSET_Y),
                                 z: (joint.z * SCALE_Z + OFFSET_Z)
@@ -116,8 +137,8 @@ window.onload = function () {
 
                         el.setAttribute('position', final.x + " " + final.y + " " + final.z);
 
-                        if (initial.x && initial.y && initial.z && ALLOWED_TO_DRAW_LEFT && ALLOWED_TO_DRAW_RIGHT && !ALLOWED_TO_PICK_COLOR)
-                            actionFunction(initial, final, scene, el);
+                        if (initial.x && initial.y && initial.z && ((ALLOWED_TO_DRAW_LEFT && joint.name == "handleft") || (ALLOWED_TO_DRAW_RIGHT && joint.name == "handright")))
+                            actionFunction(initial, final, scene, el, joint.name);
                     }
                 }
             }
@@ -125,16 +146,17 @@ window.onload = function () {
     })
 
     socket.on("action", function (data) {
-        console.log(data);
         if (data.action === "gripped") {
+            if(data.hand == "left")
             ALLOWED_TO_DRAW_LEFT = true;
+            if(data.hand == "right")
             ALLOWED_TO_DRAW_RIGHT = true;
-            ALLOWED_TO_PICK_COLOR = false;
         }
         if (data.action === "released") {
+            if (data.hand == "left")
             ALLOWED_TO_DRAW_LEFT = false;
+            if (data.hand == "right")
             ALLOWED_TO_DRAW_RIGHT = false;
-            ALLOWED_TO_PICK_COLOR = true;
         }
     })
 }

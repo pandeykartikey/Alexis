@@ -9,21 +9,22 @@
 </head>
 <body>
     <a-scene stats id="scene">
-         <a-sphere id="left" class="hand" position="0 1.25 -5" radius="0.5" color="#EF2D5E"></a-sphere>
-        <a-sphere id="right" class="hand" position="0 1.25 -5" radius="0.5" color="#EF2D5E"></a-sphere>
 
+        <a-camera>
+            <a-sphere id="left" class="hand" radius="0.5" color="#EF2D5E"></a-sphere>
+            <a-sphere id="right" class="hand" radius="0.5" color="#EF2D5E"></a-sphere>
 
-        <a-sphere id="brush" class="controls" position="-12 1.25 -5" radius="0.5" color="#000000"></a-sphere>
-        <a-sphere id="eraser" class="controls" position="-12 3 -5" radius="0.5" color="#000000"></a-sphere>
-        
-        
-        <a-sphere id="color1" class="controls-color" position="12 8 -5" radius="0.5" color="red"></a-sphere>
-        <a-sphere id="color2" class="controls-color" position="12 -4 -5" radius="0.5" color="blue"></a-sphere>
-        <a-sphere id="color3" class="controls-color" position="12 -2 -5" radius="0.5" color="green"></a-sphere>
-        <a-sphere id="color4" class="controls-color" position="12 0 -5" radius="0.5" color="orange"></a-sphere>
-        <a-sphere id="color5" class="controls-control" position="12 2 -5" radius="0.5" color="pink"></a-sphere>
-        <a-sphere id="color6" class="controls-control" position="12 4 -5" radius="0.5" color="black"></a-sphere>
-        <a-sphere id="color7" class="controls-control" position="12 6 -5" radius="0.5" color="white"></a-sphere>
+            <a-sphere id="brush" class="controls" position="-7 0 -5" radius="0.5" color="#000000"></a-sphere>
+            <a-sphere id="eraser" class="controls" position="-7 2 -5" radius="0.5" color="#000000"></a-sphere>
+
+            <a-box id="color1" class="controls-color" position="-5 -2.5 -5" color="red"></a-box>
+            <a-box id="color2" class="controls-color" position="-3 -2.5 -5" radius="0.5" color="blue"></a-box>
+            <a-box id="color3" class="controls-color" position="-1 -2.5 -5" radius="0.5" color="green"></a-box>
+            <a-box id="color4" class="controls-color" position="1 -2.5 -5" radius="0.5" color="orange"></a-box>
+            <a-box id="color5" class="controls-control" position="3 -2.5 -5" radius="0.5" color="pink"></a-box>
+            <a-box id="color6" class="controls-control" position="5 -2.5 -5" radius="0.5" color="black"></a-box>
+
+        </a-camera>
     </a-scene>
 
     <script src="control.js"></script>
