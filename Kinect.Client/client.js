@@ -8,6 +8,10 @@ var SERVER = ["ws://localhost:8181"];
 var PORT = 3000;
 var HOSTNAME = "0.0.0.0";
 
+http.listen(PORT, HOSTNAME, function () {
+    console.log(HOSTNAME, PORT);
+});
+
 app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
@@ -19,10 +23,6 @@ app.use(express.static('public'));
 app.get('/', function (req, res, next) {
     res.sendfile(__dirname + '/public/index.html');
 })
-
-http.listen(PORT, HOSTNAME ,function () {
-    console.log(HOSTNAME, PORT);
-});
 
 var user = [];
 var soc = [];
@@ -61,7 +61,6 @@ io.on('connection', function (socket) {
                 // Get the data in JSON format.
                 tmp = JSON.parse(event.data);
                 if (tmp.hand) {
-                    console.log(tmp.action);
                     io.emit("action", tmp);
                 }
                 else {
