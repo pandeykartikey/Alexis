@@ -56,13 +56,11 @@ io.on('connection', function (socket) {
     for (var i = 0; i < SERVER.length; i++) {
 
         soc[i].onmessage = function (event) {
-            console.log(event.data);
             if (typeof event.data === "string") {
                 // SKELETON DATA from a single kinect
                 // Get the data in JSON format.
                 tmp = JSON.parse(event.data);
                 if (tmp.hand) {
-                    console.log(tmp.action);
                     io.emit("action", tmp);
                 }
                 else {

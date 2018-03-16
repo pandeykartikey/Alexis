@@ -14,13 +14,13 @@ var color5 = document.getElementById('color5');
 var color6 = document.getElementById('color6');
 
 function changeColor(color, hand){
-    hand.setAttribute('color', color);
-    if (hand.id === "right") {
+    if (hand.id === "right" && ALLOWED_TO_DRAW_RIGHT) {
+        hand.setAttribute('color', color);
         COLOR_RIGHT = color;
-    } else {
+    } else if (ALLOWED_TO_DRAW_LEFT) {
+        hand.setAttribute('color', color);
         COLOR_LEFT = color;
     }
-	MESH_DEFAULT_COLOR = color;
 }	
 
 
@@ -56,4 +56,20 @@ checkCollision(color3, hand2, changeColor);
 checkCollision(color4, hand2, changeColor);
 checkCollision(color5, hand2, changeColor);
 checkCollision(color6, hand2, changeColor);
-
+var debug_scale = 2;
+document.addEventListener('keypress', (event) => {
+    var pos = hand1.getAttribute('position');
+    const key = event.code;
+    if (key == "KeyI")
+        hand1.setAttribute('position', pos.x + " " + (pos.y +debug_scale)+ " " + pos.z);
+    if (key == "KeyK")
+        hand1.setAttribute('position', pos.x + " " + (pos.y -debug_scale)+ " " + pos.z);
+    if (key == "KeyJ")
+        hand1.setAttribute('position', (pos.x -debug_scale) + " " + pos.y + " " + pos.z);
+    if (key == "KeyL")
+        hand1.setAttribute('position', (pos.x +debug_scale) + " " + pos.y + " " + pos.z);
+    if (key == "KeyD")
+        hand1.setAttribute('position', pos.x + " " + pos.y + " " + (pos.z-debug_scale));
+    if (key == "KeyF")
+        hand1.setAttribute('position', pos.x + " " + pos.y + " " + (pos.z+debug_scale));
+});

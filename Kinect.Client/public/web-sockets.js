@@ -13,7 +13,7 @@ var MESH_LINE_WIDTH = '10';
 var COLOR_LEFT = '#E20049';
 var COLOR_RIGHT = '#E20049';
 
-var SOCKET_URL = "https://db098efa.ngrok.io/";
+var SOCKET_URL = window.location.origin;
 var actionFunction = draw;
 
 function draw(initial, final, scene, el, hand) {
@@ -77,7 +77,7 @@ window.onload = function () {
         "handright": [],
         "handleft": []
     };
-    var smoothness = 1;
+    var smoothness = 5;
 
     status.innerHTML = "Connecting to server...";
 
