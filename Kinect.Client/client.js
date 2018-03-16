@@ -54,7 +54,7 @@ io.on('connection', function (socket) {
     console.log("A user is connected");
 
     for (var i = 0; i < SERVER.length; i++) {
-
+        
         soc[i].onmessage = function (event) {
             if (typeof event.data === "string") {
                 // SKELETON DATA from a single kinect

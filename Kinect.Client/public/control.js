@@ -14,10 +14,10 @@ var color5 = document.getElementById('color5');
 var color6 = document.getElementById('color6');
 
 function changeColor(color, hand){
-    if (hand.id === "right" && ALLOWED_TO_DRAW_RIGHT) {
+    if (hand.id === "right" && !ALLOWED_TO_DRAW_RIGHT) {
         hand.setAttribute('color', color);
         COLOR_RIGHT = color;
-    } else if (ALLOWED_TO_DRAW_LEFT) {
+    } else if (!ALLOWED_TO_DRAW_LEFT) {
         hand.setAttribute('color', color);
         COLOR_LEFT = color;
     }

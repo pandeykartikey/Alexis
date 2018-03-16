@@ -1,11 +1,14 @@
 ﻿var SCALE_X = 1 / 10;
 var SCALE_Y = -1 / 15;
-var SCALE_Z = 10;
+var SCALE_Z = 15;
 
 var OFFSET_X = -30;
 var OFFSET_Y = 15;
 var OFFSET_Z = -30;
 
+var OFFSET_HIP_Z = 10;
+
+var DEFAULT_HIP_X, DEFAULT_HIP_Y, DEFAULT_HIP_Z;
 var ALLOWED_TO_DRAW_LEFT = false;
 var ALLOWED_TO_DRAW_RIGHT = false;
 
@@ -15,6 +18,17 @@ var COLOR_RIGHT = '#E20049';
 
 var SOCKET_URL = window.location.origin;
 var actionFunction = draw;
+
+
+
+var jointsArray = {
+    "handright": [],
+    "handleft": [],
+    "hipcenter": []
+};
+
+var smoothness = 5;
+
 
 function draw(initial, final, scene, el, hand) {
 
@@ -69,15 +83,41 @@ function erase(initial, final, scene, el) {
         el.setAttribute('position', final.x + " " + final.y + " " + final.z);
     }
 }
+function make_smooth(el, joint, smoothness) {
+    var initial = {
+        x: '', y: '', z: ''
+    };
+    if (el.getAttribute('position')) {
+        initial = {
+            x: el.getAttribute('position').x,
+            y: el.getAttribute('position').y,
+            z: el.getAttribute('position').z
+        }
+    }
+    var final = {
+        x: (joint.x * SCALE_X + OFFSET_X),
+        y: (joint.y * SCALE_Y + OFFSET_Y),
+        z: (joint.z * SCALE_Z + OFFSET_Z)
+    };
 
+    if (initial.x && initial.y && initial.z) {
+        if (jointsArray[joint.name].length === smoothness) {
+            var temp = jointsArray[joint.name].shift();
+            jointsArray[joint.name].push(final);
+
+            final.x = ((initial.x * smoothness) - temp.x + final.x) / smoothness;
+            final.y = ((initial.y * smoothness) - temp.y + final.y) / smoothness;
+            final.z = ((initial.z * smoothness) - temp.z + final.z) / smoothness;
+        }
+        else {
+            jointsArray[joint.name].push(final);
+        }
+    }
+    return final;
+}
 window.onload = function () {
     var scene = document.querySelector("#scene");
-    
-    var jointsArray = {
-        "handright": [],
-        "handleft": []
-    };
-    var smoothness = 5;
+
 
     status.innerHTML = "Connecting to server...";
 
@@ -98,7 +138,16 @@ window.onload = function () {
             for (var i = 0; i < jsonObject.skeletons.length; i++) {
                 for (var j = 0; j < jsonObject.skeletons[i].joints.length; j++) {
                     var joint = jsonObject.skeletons[i].joints[j];
-
+                    if (joint.name === "hipcenter") {
+                        var el = document.querySelector("#camera");
+                        if (DEFAULT_HIP_X && DEFAULT_HIP_Y && DEFAULT_HIP_Z) {
+                            var final = make_smooth(el, joint, smoothness)
+                            el.setAttribute('position', 0 + " " + 0 + " " + (final.z - DEFAULT_HIP_Z + OFFSET_HIP_Z));
+                        } else {
+                            DEFAULT_HIP_X = joint.x * SCALE_X + OFFSET_X;
+                            DEFAULT_HIP_Y = joint.y * SCALE_Y + OFFSET_Y;
+                            DEFAULT_HIP_Z = joint.z * SCALE_Z + OFFSET_Z                        }
+                    }
                     if (joint.name == "handright")
                         var el = document.querySelector("#right");
                     else if (joint.name == "handleft")
@@ -106,7 +155,7 @@ window.onload = function () {
 
                     if (joint.name == "handright" || joint.name == "handleft") {
                         var initial = {
-                            x:'',y:'',z:''
+                            x: '', y: '', z: ''
                         };
                         if (el.getAttribute('position')) {
                             initial = {
@@ -115,26 +164,7 @@ window.onload = function () {
                                 z: el.getAttribute('position').z
                             }
                         }
-                        var final = {
-                                x: (joint.x * SCALE_X + OFFSET_X),
-                                y: (joint.y * SCALE_Y + OFFSET_Y),
-                                z: (joint.z * SCALE_Z + OFFSET_Z)
-                            };
-
-                        if (initial.x && initial.y && initial.z) {
-                            if (jointsArray[joint.name].length === smoothness) {
-                                var temp = jointsArray[joint.name].shift();
-                                jointsArray[joint.name].push(final);
-
-                                final.x = ((initial.x * smoothness) - temp.x + final.x) / smoothness;
-                                final.y = ((initial.y * smoothness) - temp.y + final.y) / smoothness;
-                                final.z = ((initial.z * smoothness) - temp.z + final.z) / smoothness;
-                            }
-                            else {
-                                jointsArray[joint.name].push(final);
-                            }
-                        }
-
+                        var final = make_smooth(el, joint, smoothness)
                         el.setAttribute('position', final.x + " " + final.y + " " + final.z);
 
                         if (initial.x && initial.y && initial.z && ((ALLOWED_TO_DRAW_LEFT && joint.name == "handleft") || (ALLOWED_TO_DRAW_RIGHT && joint.name == "handright")))
