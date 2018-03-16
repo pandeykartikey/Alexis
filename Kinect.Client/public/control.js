@@ -56,7 +56,7 @@ checkCollision(color3, hand2, changeColor);
 checkCollision(color4, hand2, changeColor);
 checkCollision(color5, hand2, changeColor);
 checkCollision(color6, hand2, changeColor);
-var debug_scale = 2;
+var debug_scale = 0.5;
 document.addEventListener('keypress', (event) => {
     var pos = hand1.getAttribute('position');
     const key = event.code;
@@ -68,8 +68,53 @@ document.addEventListener('keypress', (event) => {
         hand1.setAttribute('position', (pos.x -debug_scale) + " " + pos.y + " " + pos.z);
     if (key == "KeyL")
         hand1.setAttribute('position', (pos.x +debug_scale) + " " + pos.y + " " + pos.z);
-    if (key == "KeyD")
+    if (key == "KeyR")
         hand1.setAttribute('position', pos.x + " " + pos.y + " " + (pos.z-debug_scale));
-    if (key == "KeyF")
-        hand1.setAttribute('position', pos.x + " " + pos.y + " " + (pos.z+debug_scale));
+    if (key == "KeyT")
+        hand1.setAttribute('position', pos.x + " " + pos.y + " " + (pos.z+debug_scale));   
+
+    var start = hand1.getAttribute('position');
+    var end = document.getElementById("camera").getAttribute('position');
+    var vec = {
+                                x: - start.x + end.x,
+                                y: - start.y + end.y,
+                                z: - start.z + end.z,
+                            }; 
+    var len = Math.sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
+
+
+    var t_vec = new THREE.Vector3(vec.x, vec.y, vec.z);
+    var rotation = {
+        x: t_vec.angleTo(new THREE.Vector3(1, 0, 0)) * 180 / Math.PI,
+        y: t_vec.angleTo(new THREE.Vector3(0, 1, 0)) * 180 / Math.PI,
+        z: t_vec.angleTo(new THREE.Vector3(0, 0, -1)) * 180 / Math.PI
+    };
+
+    var cyl_pos = {
+        x: start.x + vec.x/2,
+        y: start.y + vec.y/2,
+        z: start.z + vec.z/2,
+    };
+    //    var cyl_pos = {
+    //     x: start.x,
+    //     y: start.y,
+    //     z: start.z,
+    // }
+
+    var pointX = new THREE.Vector3(start.x, start.y, start.z);
+    var pointY = new THREE.Vector3(end.x, end.y, end.z);
+    var direction = new THREE.Vector3().subVectors( pointY, pointX );
+    var arrow = new THREE.ArrowHelper( direction, pointX );
+
+    var rot = {
+        x: arrow.rotation.x * 180 / Math.PI,
+        y: arrow.rotation.y * 180 / Math.PI,
+        z: arrow.rotation.z * 180 / Math.PI,
+    };
+
+
+    document.querySelector("#detect-ray").setAttribute('position', cyl_pos.x + " " + cyl_pos.y + " " + cyl_pos.z);
+    document.querySelector("#detect-ray").setAttribute('rotation', rot);
+    document.querySelector("#detect-ray").setAttribute('height', len);
+
 });

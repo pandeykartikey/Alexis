@@ -10,7 +10,7 @@ var ALLOWED_TO_DRAW_LEFT = false;
 var ALLOWED_TO_DRAW_RIGHT = false;
 
 var MESH_LINE_WIDTH = '10';
-var COLOR_LEFT = '#E20049';
+var COLOR_LEFT = '#E29900';
 var COLOR_RIGHT = '#E20049';
 
 var SOCKET_URL = window.location.origin;
@@ -137,8 +137,19 @@ window.onload = function () {
 
                         el.setAttribute('position', final.x + " " + final.y + " " + final.z);
 
-                        if (initial.x && initial.y && initial.z && ((ALLOWED_TO_DRAW_LEFT && joint.name == "handleft") || (ALLOWED_TO_DRAW_RIGHT && joint.name == "handright")))
+                        if (initial.x && initial.y && initial.z && ((ALLOWED_TO_DRAW_LEFT && joint.name == "handleft") || (ALLOWED_TO_DRAW_RIGHT && joint.name == "handright"))) {
+
                             actionFunction(initial, final, scene, el, joint.name);
+
+                            var mid = {
+                                x: final.x / 2,
+                                y: final.y / 2,
+                                z: final.z / 2,
+                            };
+
+                            document.querySelector("#detect-ray").setAttribute('position', mid.x + " " + mid.y + " " + mid.z);
+
+                        }
                     }
                 }
             }
