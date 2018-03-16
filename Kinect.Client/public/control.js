@@ -56,7 +56,14 @@ checkCollision(color3, hand2, changeColor);
 checkCollision(color4, hand2, changeColor);
 checkCollision(color5, hand2, changeColor);
 checkCollision(color6, hand2, changeColor);
+
+
+
+
 var debug_scale = 2;
+
+
+
 document.addEventListener('keypress', (event) => {
     var pos = hand1.getAttribute('position');
     const key = event.code;
@@ -72,4 +79,32 @@ document.addEventListener('keypress', (event) => {
         hand1.setAttribute('position', pos.x + " " + pos.y + " " + (pos.z-debug_scale));
     if (key == "KeyF")
         hand1.setAttribute('position', pos.x + " " + pos.y + " " + (pos.z+debug_scale));
+
+    var start = hand1.getAttribute('position');
+    var end = document.getElementById('camera').getAttribute('position');
+
+    var point1 = start;
+    var point2 = end;
+
+       var direction = new THREE.Vector3().subVectors(point2, point1);
+       var arrow = new THREE.ArrowHelper(direction.clone().normalize(), point1);
+
+       var rotation = (new THREE.Euler()).setFromQuaternion(arrow.quaternion);
+
+       var rotation = rotation.clone();
+
+       var rot = {
+       	x: rotation.x * 180 / Math.PI,
+       	y: rotation.y * 180 / Math.PI,
+       	z: rotation.z * 180 / Math.PI,
+       };
+
+       var pos = {
+       	x: start.x + direction.x,
+       	y: start.y + direction.y,
+       	z: start.z + direction.z,
+       };
+
+    document.getElementById('ray-path').setAttribute('position', pos);
+    document.getElementById('ray-path').setAttribute('rotation', rot);
 });

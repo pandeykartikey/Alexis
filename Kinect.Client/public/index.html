@@ -2,15 +2,16 @@
 <head>
     <title>Kinect &amp; HTML5</title>
     <link rel="stylesheet" href="style.css" />
-    <script src="https://aframe.io/releases/0.2.0/aframe.min.js"></script>
+    <script src="https://aframe.io/releases/0.8.0/aframe.min.js"></script>
     <script src="https://rawgit.com/andreasplesch/aframe-meshline-component/master/dist/aframe-meshline-component.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
     <script src="web-sockets.js"></script>
+    <script type="text/javascript" src="components.js"></script>
 </head>
 <body>
     <a-scene stats id="scene">
 
-        <a-camera>
+        <a-camera id="camera">
             <a-sphere id="left" position="2 0 -8" class="hand" radius="0.5" color="#EF2D5E"></a-sphere>
             <a-sphere id="right" position="0 0 0" class="hand" radius="0.5" color="#EF2D5E"></a-sphere>
 
@@ -21,12 +22,19 @@
             <a-box id="color2" class="controls-color" position="-3 -2.5 -5" radius="0.5" color="blue"></a-box>
             <a-box id="color3" class="controls-color" position="-1 -2.5 -5" radius="0.5" color="green"></a-box>
             <a-box id="color4" class="controls-color" position="1 -2.5 -5" radius="0.5" color="orange"></a-box>
-            <a-box id="color5" class="controls-control" position="3 -2.5 -5" radius="0.5" color="pink"></a-box>
-            <a-box id="color6" class="controls-control" position="5 -2.5 -5" radius="0.5" color="black"></a-box>
+            <a-box id="color5" class="controls-color" position="3 -2.5 -5" radius="0.5" color="pink"></a-box>
+            <a-box id="color6" class="controls-color" position="5 -2.5 -5" radius="0.5" color="black"></a-box>
 
-        </a-camera>
-    </a-scene>
+            <!-- <a-tube id="ray-path" path="5 0 5,-5 0 -5" radius="0.2"></a-tube> -->
+            <a-entity id="player" collider-check>
+                <a-cylinder id="ray-path" height="20" position="0, 1, 1" radius="0.2" color="blue">
+              </a-cylinder>
+                  <a-entity raycaster="objects: .controls-color"></a-entity>
+            </a-entity>
 
-    <script src="control.js"></script>
+      </a-camera>
+  </a-scene>
+
+  <script src="control.js"></script>
 </body>
 </html>
